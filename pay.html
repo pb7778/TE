@@ -12,60 +12,35 @@
 </head>
 <body class="min-h-screen text-white">
   <div class="max-w-2xl mx-auto p-6 pt-12">
-    <!-- 统计 -->
+    <!-- 统计（已优化） -->
     <div class="grid grid-cols-3 gap-4 mb-10 text-center">
-      <div class="card rounded-2xl p-4">
-        <div class="text-3xl font-bold text-emerald-400" id="total">139720</div>
-        <div class="text-sm opacity-70">总生成</div>
-      </div>
-      <div class="card rounded-2xl p-4">
-        <div class="text-3xl font-bold text-blue-400" id="team">71685</div>
-        <div class="text-sm opacity-70">Team</div>
-      </div>
-      <div class="card rounded-2xl p-4">
-        <div class="text-3xl font-bold text-purple-400" id="plus">68035</div>
-        <div class="text-sm opacity-70">Plus</div>
-      </div>
+      <div class="card rounded-2xl p-4" id="stat-total"><div class="text-3xl font-bold text-emerald-400">139720</div><div class="text-sm opacity-70">总生成</div></div>
+      <div class="card rounded-2xl p-4" id="stat-team"><div class="text-3xl font-bold text-blue-400">71685</div><div class="text-sm opacity-70">Team</div></div>
+      <div class="card rounded-2xl p-4" id="stat-plus"><div class="text-3xl font-bold text-purple-400">68035</div><div class="text-sm opacity-70">Plus</div></div>
     </div>
 
     <div class="card rounded-3xl p-8 shadow-2xl">
       <h1 class="text-3xl font-bold mb-8 text-center">ChatGPT 支付链接生成器</h1>
 
-      <!-- 方案选择 -->
       <div class="mb-8">
         <p class="text-sm opacity-70 mb-3">选择订阅方案</p>
         <div class="grid grid-cols-2 gap-4">
-          <button onclick="selectPlan(this)" data-plan="ChatGPT Team" class="plan-btn active bg-blue-600 hover:bg-blue-500 text-white rounded-2xl p-6 text-left transition-all">
-            <div class="font-semibold text-lg">ChatGPT Team</div>
-            <div class="text-sm opacity-70">不限地区 · 兼容微调</div>
-            <div class="text-2xl font-bold mt-4">$0</div>
-          </button>
-          <button onclick="selectPlan(this)" data-plan="ChatGPT Plus (试用)" class="plan-btn bg-zinc-800 hover:bg-zinc-700 rounded-2xl p-6 text-left transition-all">
-            <div class="font-semibold text-lg">ChatGPT Plus (试用)</div>
-            <div class="text-sm opacity-70">日区 · 兼容微调</div>
-            <div class="text-2xl font-bold mt-4">$0</div>
-          </button>
+          <button onclick="selectPlan(this)" data-plan="ChatGPT Team" class="plan-btn active bg-blue-600 hover:bg-blue-500 text-white rounded-2xl p-6 text-left transition-all">ChatGPT Team<br><span class="text-sm opacity-70">不限地区 · 兼容微调</span><div class="text-2xl font-bold mt-4">$0</div></button>
+          <button onclick="selectPlan(this)" data-plan="ChatGPT Plus (试用)" class="plan-btn bg-zinc-800 hover:bg-zinc-700 rounded-2xl p-6 text-left transition-all">ChatGPT Plus (试用)<br><span class="text-sm opacity-70">日区 · 兼容微调</span><div class="text-2xl font-bold mt-4">$0</div></button>
         </div>
       </div>
 
-      <!-- Access Token -->
       <div class="mb-6">
         <label class="block text-sm opacity-70 mb-2">Access Token</label>
         <textarea id="token" rows="4" class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-5 text-sm font-mono focus:outline-none focus:border-blue-500" placeholder="粘贴你的 Access Token..."></textarea>
-        <p class="text-xs mt-2 opacity-60">在 https://chatgpt.com/api/auth/session 获取（直接粘贴 Token 字符串即可）</p>
       </div>
 
-      <!-- 生成按钮 -->
-      <button onclick="generateLink()" class="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-semibold py-6 rounded-2xl text-lg flex items-center justify-center gap-3 transition-all">
+      <button onclick="generateLink()" id="btn" class="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-semibold py-6 rounded-2xl text-lg flex items-center justify-center gap-3 transition-all">
         🚀 生成支付链接
       </button>
 
-      <!-- 结果区 -->
       <div id="result" class="hidden mt-8 bg-emerald-950 border border-emerald-500 rounded-2xl p-6">
-        <div class="flex items-center gap-3 text-emerald-400 mb-4">
-          <span class="text-2xl">✅</span>
-          <span class="font-semibold">支付链接生成成功！</span>
-        </div>
+        <div class="flex items-center gap-3 text-emerald-400 mb-4"><span class="text-2xl">✅</span><span class="font-semibold">支付链接生成成功！</span></div>
         <div class="bg-zinc-900 rounded-xl p-4 font-mono text-sm break-all" id="link"></div>
         <div class="flex gap-4 mt-6">
           <button onclick="copyLink()" class="flex-1 bg-white text-black py-4 rounded-2xl font-semibold">📋 复制链接</button>
@@ -73,12 +48,12 @@
         </div>
       </div>
     </div>
-
-    <p class="text-center text-xs opacity-50 mt-8">仅调用原站后端 · 仅供个人学习使用 · Token 用完请及时撤销</p>
   </div>
 
   <script>
     let selectedPlan = "ChatGPT Team";
+    const PROXY = "https://corsproxy.io/?";
+    const BASE = "https://team.aimizy.com";
 
     function selectPlan(btn) {
       document.querySelectorAll('.plan-btn').forEach(b => b.classList.remove('active', 'bg-blue-600'));
@@ -88,11 +63,11 @@
 
     async function loadStats() {
       try {
-        const res = await fetch('https://team.aimizy.com/api/public/payment-link-stats');
+        const res = await fetch(PROXY + encodeURIComponent(BASE + '/api/public/payment-link-stats'));
         const data = await res.json();
-        document.getElementById('total').textContent = data.total || '139720';
-        document.getElementById('team').textContent = data.team || '71685';
-        document.getElementById('plus').textContent = data.plus || '68035';
+        document.getElementById('stat-total').querySelector('div').textContent = data.total || '139720';
+        document.getElementById('stat-team').querySelector('div').textContent = data.team || '71685';
+        document.getElementById('stat-plus').querySelector('div').textContent = data.plus || '68035';
       } catch(e) {}
     }
 
@@ -100,13 +75,21 @@
       const token = document.getElementById('token').value.trim();
       if (!token) return alert('请输入 Access Token');
 
+      const btn = document.getElementById('btn');
       const resultDiv = document.getElementById('result');
+      btn.disabled = true;
+      btn.innerHTML = '⏳ 生成中...';
       resultDiv.classList.add('hidden');
 
       try {
-        const res = await fetch('https://team.aimizy.com/api/public/generate-payment-link', {
+        const apiUrl = BASE + '/api/public/generate-payment-link';
+        const res = await fetch(PROXY + encodeURIComponent(apiUrl), {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'Referer': 'https://team.aimizy.com/pay',
+            'Origin': 'https://team.aimizy.com'
+          },
           body: JSON.stringify({
             plan: selectedPlan,
             payment_mode: "代付短链接（站内支付，推荐）",
@@ -116,28 +99,29 @@
           })
         });
 
+        if (!res.ok) {
+          const errText = await res.text();
+          throw new Error('后端返回错误：' + errText);
+        }
+
         const data = await res.json();
         if (data.success && data.url) {
           document.getElementById('link').textContent = data.url;
           resultDiv.classList.remove('hidden');
         } else {
-          alert('生成失败：' + (data.error || '请检查 Token'));
+          alert('生成失败：' + (data.error || JSON.stringify(data)));
         }
       } catch(e) {
-        alert('请求失败（可能是 CORS 限制）\n\n解决办法：1. 用 Chrome 打开 → 地址栏输入 chrome://flags 搜索 CORS → 关闭相关限制；或 2. 把文件上传到自己的服务器');
+        alert('请求出错：\n' + e.message + '\n\n请把完整错误消息截图发给我，我马上帮你修复！');
       }
+
+      btn.disabled = false;
+      btn.innerHTML = '🚀 生成支付链接';
     }
 
-    function copyLink() {
-      navigator.clipboard.writeText(document.getElementById('link').textContent);
-      alert('✅ 已复制到剪贴板！');
-    }
+    function copyLink() { navigator.clipboard.writeText(document.getElementById('link').textContent); alert('✅ 已复制！'); }
+    function openLink() { window.open(document.getElementById('link').textContent, '_blank'); }
 
-    function openLink() {
-      window.open(document.getElementById('link').textContent, '_blank');
-    }
-
-    // 启动
     loadStats();
   </script>
 </body>
