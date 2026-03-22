@@ -191,6 +191,50 @@
       pointer-events: none; color: var(--text-secondary); font-size: 12px;
     }
 
+    .mode-toggle {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .mode-card {
+      display: flex; align-items: center; gap: 12px;
+      padding: 16px;
+      border: 2px solid var(--border); border-radius: 14px;
+      background: var(--white); color: var(--text-secondary);
+      cursor: pointer; transition: all .2s ease;
+      min-height: 72px; box-shadow: 0 4px 12px rgba(15,23,42,.03);
+      font-family: inherit;
+    }
+    .mode-card:hover { border-color: #cbd5e1; transform: translateY(-1px); }
+    .mode-card:focus-visible { outline: 2px solid var(--indigo); outline-offset: 2px; }
+    .mode-card.active {
+      border-color: var(--indigo);
+      background: linear-gradient(135deg, #eef2ff, #e0e7ff);
+      color: var(--text-primary);
+      box-shadow: 0 8px 20px rgba(99,102,241,.2);
+    }
+    .mode-card .mode-icon {
+      width: 42px; height: 42px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(99,102,241,.12); color: var(--indigo);
+      font-size: 22px; flex-shrink: 0;
+    }
+    .mode-card.active .mode-icon { background: #fff; color: var(--indigo-dark); }
+    .mode-info { display: flex; flex-direction: column; gap: 2px; text-align: left; }
+    .mode-name { font-size: 15px; font-weight: 700; color: var(--text-primary); }
+    .mode-card.active .mode-name { color: var(--indigo-dark); }
+    .mode-desc { font-size: 12px; color: var(--text-secondary); }
+    .mode-card.active .mode-desc { color: var(--indigo); }
+    .sr-only {
+      position: absolute;
+      width: 1px; height: 1px;
+      padding: 0; margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      border: 0;
+    }
+
     /* ── Mode hints ── */
     .mode-hints {
       margin-top: 12px; padding: 14px 16px;
@@ -199,8 +243,12 @@
     .mode-hint {
       display: flex; align-items: center; gap: 6px;
       font-size: 12px; color: var(--text-secondary); line-height: 1.6;
+      cursor: pointer; border-radius: 6px; transition: color .2s ease;
     }
     .mode-hint + .mode-hint { margin-top: 6px; }
+    .mode-hint:focus-visible { outline: 2px solid var(--indigo); outline-offset: 2px; }
+    .mode-hint.active { color: var(--text-primary); }
+    .mode-hint.active .hint-label { color: var(--indigo); }
     .hint-label { font-weight: 600; color: #475569; flex-shrink: 0; }
     .hint-badge {
       margin-left: auto; padding: 2px 8px;
@@ -432,25 +480,56 @@
       <!-- 支付模式 -->
       <div class="form-section">
         <div class="section-title"><span class="icon">💳</span> 支付模式</div>
-        <div class="custom-select-wrapper">
-          <select id="payment-mode" class="custom-select" onchange="onModeChange()">
-            <!--
-              ⚠️  这两个 value 必须与后端完全一致：
-              • 代付模式 → "代付短链接（站内支付，推荐）"
-              • 托管模式 → "托管模式（Stripe 外部页面）"
-            -->
-            <option value="代付短链接（站内支付，推荐）">代付短链接（站内支付，推荐）</option>
-            <option value="托管模式（Stripe 外部页面）">托管模式（Stripe 外部页面）</option>
-          </select>
-          <span class="select-arrow">▼</span>
+        <div class="mode-toggle" id="mode-toggle" role="group" aria-label="支付模式切换">
+          <button type="button" class="mode-card active" data-mode="代付短链接（站内支付，推荐）">
+            <div class="mode-icon">⚡</div>
+            <div class="mode-info">
+              <div class="mode-name">代付模式</div>
+              <div class="mode-desc">生成 chatgpt.com 站内短链接</div>
+            </div>
+          </button>
+          <button type="button" class="mode-card" data-mode="托管模式（Stripe 外部页面）">
+            <div class="mode-icon">🌐</div>
+            <div class="mode-info">
+              <div class="mode-name">托管模式</div>
+              <div class="mode-desc">跳转 Stripe 外部页面</div>
+            </div>
+          </button>
         </div>
+        <select
+          id="payment-mode"
+          class="custom-select sr-only"
+          onchange="onModeChange()"
+          aria-hidden="true"
+          tabindex="-1"
+        >
+          <!--
+            ⚠️  这两个 value 必须与后端完全一致：
+            • 代付模式 → "代付短链接（站内支付，推荐）"
+            • 托管模式 → "托管模式（Stripe 外部页面）"
+          -->
+          <option value="代付短链接（站内支付，推荐）">代付短链接（站内支付，推荐）</option>
+          <option value="托管模式（Stripe 外部页面）">托管模式（Stripe 外部页面）</option>
+        </select>
         <div class="mode-hints">
-          <div class="mode-hint" id="hint-proxy">
+          <div
+            class="mode-hint"
+            id="hint-proxy"
+            data-mode="代付短链接（站内支付，推荐）"
+            role="button"
+            tabindex="0"
+          >
             <span class="hint-label">代付模式：</span>
             生成 chatgpt.com 短链接，在站内完成支付，体验更佳
             <span class="hint-badge success">推荐</span>
           </div>
-          <div class="mode-hint" id="hint-hosted">
+          <div
+            class="mode-hint"
+            id="hint-hosted"
+            data-mode="托管模式（Stripe 外部页面）"
+            role="button"
+            tabindex="0"
+          >
             <span class="hint-label">托管模式：</span>
             生成 pay.openai.com 长链接，跳转到 Stripe 外部页面
           </div>
@@ -557,6 +636,8 @@
   const API_BASE  = 'https://team.aimizy.com';
   // CORS 代理 — 本地运行时后端会拒绝来自 file:// 的请求，需要代理
   const CORS_PROXY = 'https://corsproxy.io/?';
+  const MODE_PROXY_VALUE  = '代付短链接（站内支付，推荐）';
+  const MODE_HOSTED_VALUE = '托管模式（Stripe 外部页面）';
 
   // 国家 → 货币映射
   const COUNTRY_CURRENCY = {
@@ -572,6 +653,8 @@
   document.addEventListener('DOMContentLoaded', () => {
     loadStats();
     bindTokenPaste();
+    initModeToggle();
+    onModeChange();
   });
 
   // ============================================================
@@ -583,19 +666,76 @@
   }
 
   // ============================================================
-  // 支付模式切换 —— 仅更新 hint 高亮（值已由 <select> 维护）
+  // 支付模式卡片 + 高亮
   // ============================================================
+  function initModeToggle() {
+    const select = document.getElementById('payment-mode');
+    if (!select) return;
+
+    const cards = document.querySelectorAll('.mode-card');
+    cards.forEach(card => {
+      card.addEventListener('click', () => {
+        const { mode } = card.dataset;
+        if (mode) setPaymentMode(mode);
+      });
+    });
+
+    const activeCard = document.querySelector('.mode-card.active');
+    if (activeCard && activeCard.dataset.mode) {
+      select.value = activeCard.dataset.mode;
+    } else if (!select.value && cards.length) {
+      select.value = cards[0].dataset.mode;
+    }
+
+    bindModeHintToggle();
+  }
+
+  function setPaymentMode(value) {
+    const select = document.getElementById('payment-mode');
+    if (!select || !value) return;
+    if (select.value !== value) {
+      select.value = value;
+    }
+    onModeChange();
+  }
+
   function onModeChange() {
-    const mode = document.getElementById('payment-mode').value;
+    const select = document.getElementById('payment-mode');
+    if (!select) return;
+    const mode = select.value;
+    updateModeCardActive(mode);
+    updateModeHintActive(mode);
+  }
+
+  function updateModeCardActive(mode) {
+    document.querySelectorAll('.mode-card').forEach(card => {
+      const isActive = card.dataset.mode === mode;
+      card.classList.toggle('active', isActive);
+      card.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+    });
+  }
+
+  function updateModeHintActive(mode) {
     const hintProxy  = document.getElementById('hint-proxy');
     const hintHosted = document.getElementById('hint-hosted');
-    if (mode === '代付短链接（站内支付，推荐）') {
-      hintProxy.style.color  = '#166534';
-      hintHosted.style.color = '';
-    } else {
-      hintProxy.style.color  = '';
-      hintHosted.style.color = '#166534';
-    }
+    if (hintProxy) hintProxy.classList.toggle('active', mode === MODE_PROXY_VALUE);
+    if (hintHosted) hintHosted.classList.toggle('active', mode === MODE_HOSTED_VALUE);
+  }
+
+  function bindModeHintToggle() {
+    document.querySelectorAll('.mode-hint[data-mode]').forEach(hint => {
+      hint.addEventListener('click', () => {
+        const { mode } = hint.dataset;
+        if (mode) setPaymentMode(mode);
+      });
+      hint.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar') {
+          event.preventDefault();
+          const { mode } = hint.dataset;
+          if (mode) setPaymentMode(mode);
+        }
+      });
+    });
   }
 
   // ============================================================
