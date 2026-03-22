@@ -15,7 +15,7 @@
 </head>
 <body class="min-h-screen py-8">
   <div class="max-w-[1080px] mx-auto px-6">
-    <!-- 顶部统计 -->
+    <!-- 统计 -->
     <div class="grid grid-cols-3 gap-6 mb-10">
       <div class="stat-card rounded-3xl p-6 text-center"><div id="total" class="text-4xl font-bold text-emerald-600">139720</div><div class="text-sm text-gray-500 mt-1">总计生成</div></div>
       <div class="stat-card rounded-3xl p-6 text-center"><div id="team" class="text-4xl font-bold text-emerald-600">71685</div><div class="text-sm text-gray-500 mt-1">Team</div></div>
@@ -36,14 +36,16 @@
         </div>
       </div>
 
-      <!-- 支付模式（严格抄原站两个卡片，默认短链接） -->
+      <!-- 支付模式（严格抄原站完整文字，默认短链接） -->
       <div class="mb-8">
         <div class="font-semibold mb-4">支付模式</div>
         <div class="grid grid-cols-2 gap-6">
+          <!-- 短链接卡片（默认） -->
           <div onclick="selectMode(this)" data-mode="代付短链接（站内支付，推荐）" class="mode mode-selected cursor-pointer border-2 border-emerald-500 rounded-3xl p-6 relative bg-emerald-50">
             <div class="font-semibold">代付短链接（站内支付，推荐）</div>
             <div class="text-sm text-gray-500 mt-2">代付模式： 生成 chatgpt.com 短链接，在站内完成支付，体验更佳 ✓</div>
           </div>
+          <!-- 托管模式卡片 -->
           <div onclick="selectMode(this)" data-mode="托管模式" class="mode cursor-pointer border-2 border-gray-200 hover:border-gray-300 rounded-3xl p-6 relative">
             <div class="font-semibold">托管模式</div>
             <div class="text-sm text-gray-500 mt-2">托管模式： 生成 pay.openai.com 长链接，跳转到 Stripe 外部页面</div>
@@ -51,20 +53,14 @@
         </div>
       </div>
 
-      <!-- 国家/地区 和 货币代码（可切换，抄原站风格） -->
+      <!-- 国家/地区（严格抄你截图，只这4个） -->
       <div class="grid grid-cols-2 gap-6 mb-8">
         <div>
           <div class="font-semibold mb-2">国家/地区</div>
           <select id="country" class="w-full border border-gray-300 rounded-2xl px-5 py-4 text-base focus:outline-none focus:border-emerald-500">
             <option value="US">美国 (US)</option>
-            <option value="CN">中国 (CN)</option>
-            <option value="HK">香港 (HK)</option>
-            <option value="JP">日本 (JP)</option>
-            <option value="KR">韩国 (KR)</option>
             <option value="GB">英国 (GB)</option>
-            <option value="DE">德国 (DE)</option>
-            <option value="FR">法国 (FR)</option>
-            <option value="TW">台湾 (TW)</option>
+            <option value="JP">日本 (JP)</option>
             <option value="SG">新加坡 (SG)</option>
           </select>
         </div>
@@ -72,11 +68,6 @@
           <div class="font-semibold mb-2">货币代码</div>
           <select id="currency" class="w-full border border-gray-300 rounded-2xl px-5 py-4 text-base focus:outline-none focus:border-emerald-500">
             <option value="USD">USD</option>
-            <option value="CNY">CNY</option>
-            <option value="HKD">HKD</option>
-            <option value="JPY">JPY</option>
-            <option value="GBP">GBP</option>
-            <option value="EUR">EUR</option>
           </select>
         </div>
       </div>
@@ -87,7 +78,6 @@
         <textarea id="token" rows="5" class="w-full border border-gray-300 rounded-3xl p-6 font-mono text-sm focus:outline-none focus:border-emerald-500" placeholder="粘贴你的 Access Token..."></textarea>
       </div>
 
-      <!-- 生成按钮 -->
       <button onclick="generateLink()" id="generateBtn" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xl py-7 rounded-3xl transition-all flex items-center justify-center gap-3 shadow-lg">🚀 生成支付链接</button>
 
       <!-- 成功结果 -->
@@ -107,12 +97,23 @@
 
   <script>
     let selectedPlan = "ChatGPT Team";
-    let selectedMode = "代付短链接（站内支付，推荐）";
+    let selectedMode = "代付短链接（站内支付，推荐）";   // 默认短链接
+
     const PROXY = "https://corsproxy.io/?";
     const BASE = "https://team.aimizy.com";
 
-    function selectPlan(el) { document.querySelectorAll('.plan').forEach(p => p.classList.remove('plan-selected', 'border-emerald-500')); el.classList.add('plan-selected', 'border-emerald-500'); selectedPlan = el.dataset.plan; }
-    function selectMode(el) { document.querySelectorAll('.mode').forEach(p => p.classList.remove('mode-selected', 'border-emerald-500', 'bg-emerald-50')); el.classList.add('mode-selected', 'border-emerald-500', 'bg-emerald-50'); selectedMode = el.dataset.mode; }
+    function selectPlan(el) {
+      document.querySelectorAll('.plan').forEach(p => p.classList.remove('plan-selected', 'border-emerald-500'));
+      el.classList.add('plan-selected', 'border-emerald-500');
+      selectedPlan = el.dataset.plan;
+    }
+
+    function selectMode(el) {
+      document.querySelectorAll('.mode').forEach(p => p.classList.remove('mode-selected', 'border-emerald-500', 'bg-emerald-50'));
+      el.classList.add('mode-selected', 'border-emerald-500', 'bg-emerald-50');
+      selectedMode = el.dataset.mode;
+      console.log('✅ 当前选中支付模式:', selectedMode);   // 调试用
+    }
 
     async function loadStats() {
       try {
@@ -130,7 +131,7 @@
 
       const bodyData = {
         plan: selectedPlan,
-        payment_mode: selectedMode,
+        payment_mode: selectedMode,          // ← 现在一定正确
         country: document.getElementById('country').value,
         currency: document.getElementById('currency').value,
         access_token: token
@@ -155,7 +156,7 @@
           alert('生成失败：' + (data.error || '未知错误'));
         }
       } catch(e) {
-        alert('请求失败！请按 F12 → Console，把“发送给后端的完整数据:”那行内容复制发我，我马上修复！');
+        alert('请求失败！请把 F12 Console 里的“发送给后端的完整数据:”完整复制发我，我马上修复！');
       }
 
       btn.disabled = false; btn.innerHTML = '🚀 生成支付链接';
