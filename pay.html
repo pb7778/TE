@@ -456,7 +456,7 @@
       <div class="form-section">
         <div class="section-title"><span class="icon">📦</span> 选择订阅方案</div>
         <div class="plan-cards">
-          <div class="plan-card active" onclick="selectPlan(this)" data-plan="ChatGPT Team">
+          <div class="plan-card active" onclick="selectPlan(this)" data-plan="ChatGPT Team" data-plan-key="team">
             <div class="plan-check">✓</div>
             <div class="plan-icon">🤝</div>
             <div class="plan-content">
@@ -465,7 +465,7 @@
               <div class="plan-price">$0</div>
             </div>
           </div>
-          <div class="plan-card" onclick="selectPlan(this)" data-plan="ChatGPT Plus (试用)">
+          <div class="plan-card" onclick="selectPlan(this)" data-plan="ChatGPT Plus (试用)" data-plan-key="plus">
             <div class="plan-check">✓</div>
             <div class="plan-icon">⭐</div>
             <div class="plan-content">
@@ -644,6 +644,29 @@
   };
   let currentPaymentMode = MODE_PROXY_VALUE;
 
+  const DEFAULT_PLAN_KEY = 'team';
+  const PLAN_CONFIG = {
+    team: {
+      label: 'ChatGPT Team',
+      planName: 'chatgptteamplan',
+      promoCampaignId: 'team-1-month-free',
+      couponFromQuery: true,
+      seatQuantity: 5,
+      priceInterval: 'month',
+      checkCardProxy: false,
+    },
+    plus: {
+      label: 'ChatGPT Plus (试用)',
+      planName: 'chatgptplusplan',
+      promoCampaignId: 'plus-1-month-free',
+      couponFromQuery: false,
+      seatQuantity: 5,
+      priceInterval: 'month',
+      checkCardProxy: true,
+    },
+  };
+  let currentPlanKey = DEFAULT_PLAN_KEY;
+
   // 国家 → 货币映射
   const COUNTRY_CURRENCY = {
     US: 'USD',
@@ -660,6 +683,12 @@
     bindTokenPaste();
     initModeToggle();
     onModeChange();
+    const activePlan = document.querySelector('.plan-card.active');
+    if (activePlan && activePlan.dataset.planKey && PLAN_CONFIG[activePlan.dataset.planKey]) {
+      currentPlanKey = activePlan.dataset.planKey;
+    } else {
+      currentPlanKey = DEFAULT_PLAN_KEY;
+    }
   });
 
   // ============================================================
@@ -668,6 +697,8 @@
   function selectPlan(el) {
     document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('active'));
     el.classList.add('active');
+    const { planKey } = el.dataset;
+    currentPlanKey = PLAN_CONFIG[planKey] ? planKey : DEFAULT_PLAN_KEY;
   }
 
   // ============================================================
@@ -752,6 +783,21 @@
     return (select && select.value) ? select.value : MODE_PROXY_VALUE;
   }
 
+  function getPlanData() {
+    const activeCard = document.querySelector('.plan-card.active');
+    let planKey = currentPlanKey;
+    if (activeCard && activeCard.dataset.planKey) {
+      planKey = activeCard.dataset.planKey;
+    }
+    if (!PLAN_CONFIG[planKey]) {
+      planKey = DEFAULT_PLAN_KEY;
+    }
+    currentPlanKey = planKey;
+    const config = PLAN_CONFIG[planKey];
+    const label = (config && config.label) || (activeCard && activeCard.dataset.plan) || 'ChatGPT Team';
+    return { key: planKey, label, config };
+  }
+
   // ============================================================
   // 国家切换 → 自动同步货币
   // ============================================================
@@ -805,7 +851,9 @@
       if (!confirm('Access Token 不以 eyJ 开头，格式可能有误，确认继续？')) return;
     }
 
-    const plan        = document.querySelector('.plan-card.active').dataset.plan;
+    const planData    = getPlanData();
+    const planLabel   = planData.label;
+    const planConfig  = planData.config || {};
     const paymentMode = getSelectedModeValue();
     const isShortLink = MODE_TO_SHORT_LINK.hasOwnProperty(paymentMode)
       ? MODE_TO_SHORT_LINK[paymentMode]
@@ -814,7 +862,13 @@
     const currency    = document.getElementById('currency').value;
 
     const payload = {
-      plan:          plan,
+      plan:          planLabel,
+      plan_name:     planConfig.planName,
+      promo_campaign_id: planConfig.promoCampaignId,
+      is_coupon_from_query_param: planConfig.couponFromQuery,
+      seat_quantity: planConfig.seatQuantity,
+      price_interval: planConfig.priceInterval,
+      check_card_proxy: planConfig.checkCardProxy,
       payment_mode:  paymentMode,   // 与旧版本保持兼容
       is_short_link: isShortLink,   // 与现网一致，true=代付短链 false=托管模式
       country:       country,
