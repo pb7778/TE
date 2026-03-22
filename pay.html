@@ -638,6 +638,11 @@
   const CORS_PROXY = 'https://corsproxy.io/?';
   const MODE_PROXY_VALUE  = '代付短链接（站内支付，推荐）';
   const MODE_HOSTED_VALUE = '托管模式（Stripe 外部页面）';
+  const MODE_TO_SHORT_LINK = {
+    [MODE_PROXY_VALUE]: true,
+    [MODE_HOSTED_VALUE]: false,
+  };
+  let currentPaymentMode = MODE_PROXY_VALUE;
 
   // 国家 → 货币映射
   const COUNTRY_CURRENCY = {
@@ -686,6 +691,7 @@
     } else if (!select.value && cards.length) {
       select.value = cards[0].dataset.mode;
     }
+    currentPaymentMode = select.value || MODE_PROXY_VALUE;
 
     bindModeHintToggle();
   }
@@ -696,13 +702,15 @@
     if (select.value !== value) {
       select.value = value;
     }
+    currentPaymentMode = value;
     onModeChange();
   }
 
   function onModeChange() {
     const select = document.getElementById('payment-mode');
     if (!select) return;
-    const mode = select.value;
+    const mode = select.value || currentPaymentMode || MODE_PROXY_VALUE;
+    currentPaymentMode = mode;
     updateModeCardActive(mode);
     updateModeHintActive(mode);
   }
@@ -736,6 +744,12 @@
         }
       });
     });
+  }
+
+  function getSelectedModeValue() {
+    if (currentPaymentMode) return currentPaymentMode;
+    const select = document.getElementById('payment-mode');
+    return (select && select.value) ? select.value : MODE_PROXY_VALUE;
   }
 
   // ============================================================
@@ -792,13 +806,17 @@
     }
 
     const plan        = document.querySelector('.plan-card.active').dataset.plan;
-    const paymentMode = document.getElementById('payment-mode').value;
+    const paymentMode = getSelectedModeValue();
+    const isShortLink = MODE_TO_SHORT_LINK.hasOwnProperty(paymentMode)
+      ? MODE_TO_SHORT_LINK[paymentMode]
+      : true;
     const country     = document.getElementById('country').value;
     const currency    = document.getElementById('currency').value;
 
     const payload = {
       plan:          plan,
-      payment_mode:  paymentMode,   // ← 与原站 Vue 下拉 value 完全一致
+      payment_mode:  paymentMode,   // 与旧版本保持兼容
+      is_short_link: isShortLink,   // 与现网一致，true=代付短链 false=托管模式
       country:       country,
       currency:      currency,
       access_token:  token,
