@@ -3,48 +3,114 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ChatGPT Team 支付工具2 - 美化版</title>
+  <title>ChatGPT Team 支付工具 - 绿色版</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    body { background: linear-gradient(135deg, #0f172a, #1e2937); }
-    .card { background: rgba(255,255,255,0.05); backdrop-filter: blur(12px); }
+    body { background: #f8fafc; font-family: system-ui, -apple-system, sans-serif; }
+    .main-card { background: white; border: 1px solid #e5e7eb; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+    .stat-card { background: white; border: 1px solid #e5e7eb; }
+    .plan-selected { border-color: #10b981; background: #f0fdf4; position: relative; }
+    .plan-selected::after { content: "✓"; position: absolute; top: 16px; right: 16px; color: #10b981; font-size: 20px; }
   </style>
 </head>
-<body class="min-h-screen text-white">
-  <div class="max-w-2xl mx-auto p-6 pt-12">
-    <!-- 统计（已优化） -->
-    <div class="grid grid-cols-3 gap-4 mb-10 text-center">
-      <div class="card rounded-2xl p-4" id="stat-total"><div class="text-3xl font-bold text-emerald-400">139720</div><div class="text-sm opacity-70">总生成</div></div>
-      <div class="card rounded-2xl p-4" id="stat-team"><div class="text-3xl font-bold text-blue-400">71685</div><div class="text-sm opacity-70">Team</div></div>
-      <div class="card rounded-2xl p-4" id="stat-plus"><div class="text-3xl font-bold text-purple-400">68035</div><div class="text-sm opacity-70">Plus</div></div>
+<body class="min-h-screen py-8">
+  <div class="max-w-[1080px] mx-auto px-6">
+    <!-- 顶部统计 -->
+    <div class="grid grid-cols-3 gap-6 mb-10">
+      <div class="stat-card rounded-3xl p-6 text-center">
+        <div id="total" class="text-4xl font-bold text-emerald-600">139720</div>
+        <div class="text-sm text-gray-500 mt-1">总计生成</div>
+      </div>
+      <div class="stat-card rounded-3xl p-6 text-center">
+        <div id="team" class="text-4xl font-bold text-emerald-600">71685</div>
+        <div class="text-sm text-gray-500 mt-1">Team</div>
+      </div>
+      <div class="stat-card rounded-3xl p-6 text-center">
+        <div id="plus" class="text-4xl font-bold text-emerald-600">68035</div>
+        <div class="text-sm text-gray-500 mt-1">Plus</div>
+      </div>
     </div>
 
-    <div class="card rounded-3xl p-8 shadow-2xl">
-      <h1 class="text-3xl font-bold mb-8 text-center">ChatGPT 2支付链接生成器</h1>
-
+    <div class="main-card rounded-3xl p-10">
+      <!-- 选择订阅方案 -->
       <div class="mb-8">
-        <p class="text-sm opacity-70 mb-3">选择订阅方案</p>
-        <div class="grid grid-cols-2 gap-4">
-          <button onclick="selectPlan(this)" data-plan="ChatGPT Team" class="plan-btn active bg-blue-600 hover:bg-blue-500 text-white rounded-2xl p-6 text-left transition-all">ChatGPT Team<br><span class="text-sm opacity-70">不限地区 · 兼容微调</span><div class="text-2xl font-bold mt-4">$0</div></button>
-          <button onclick="selectPlan(this)" data-plan="ChatGPT Plus (试用)" class="plan-btn bg-zinc-800 hover:bg-zinc-700 rounded-2xl p-6 text-left transition-all">ChatGPT Plus (试用)<br><span class="text-sm opacity-70">日区 · 兼容微调</span><div class="text-2xl font-bold mt-4">$0</div></button>
+        <div class="flex items-center gap-2 mb-4">
+          <span class="text-emerald-600 text-xl">★</span>
+          <span class="font-semibold text-lg">选择订阅方案</span>
+        </div>
+        <div class="grid grid-cols-2 gap-6">
+          <!-- Team -->
+          <div onclick="selectPlan(this)" data-plan="ChatGPT Team" class="plan plan-selected cursor-pointer border-2 border-emerald-500 rounded-3xl p-6 relative">
+            <div class="font-semibold text-xl">ChatGPT Team</div>
+            <div class="text-sm text-gray-500 mt-1">不限地区 · 兼容微调0刀</div>
+            <div class="text-3xl font-bold text-emerald-600 mt-6">$0</div>
+          </div>
+          <!-- Plus -->
+          <div onclick="selectPlan(this)" data-plan="ChatGPT Plus (试用)" class="plan cursor-pointer border-2 border-gray-200 hover:border-gray-300 rounded-3xl p-6 relative">
+            <div class="font-semibold text-xl">ChatGPT Plus (试用)</div>
+            <div class="text-sm text-gray-500 mt-1">日区 · 兼容微调0刀</div>
+            <div class="text-3xl font-bold text-emerald-600 mt-6">$0</div>
+          </div>
         </div>
       </div>
 
-      <div class="mb-6">
-        <label class="block text-sm opacity-70 mb-2">Access Token</label>
-        <textarea id="token" rows="4" class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-5 text-sm font-mono focus:outline-none focus:border-blue-500" placeholder="粘贴你的 Access Token..."></textarea>
+      <!-- 支付模式 -->
+      <div class="mb-8">
+        <div class="font-semibold mb-3">支付模式</div>
+        <select id="payment_mode" class="w-full border border-gray-300 rounded-2xl px-5 py-4 text-base focus:outline-none focus:border-emerald-500">
+          <option value="代付短链接（站内支付，推荐）">代付短链接（站内支付，推荐）</option>
+          <option value="托管模式">托管模式：生成 pay.openai.com 长链接</option>
+        </select>
+        <div class="mt-4 text-sm bg-emerald-50 border border-emerald-200 rounded-2xl p-4">
+          ✅ 代付模式：生成 chatgpt.com 短链接，在站内完成支付，体验最佳<br>
+          ✅ 托管模式：生成 pay.openai.com 长链接，跳转到 Stripe 外部页面
+        </div>
       </div>
 
-      <button onclick="generateLink()" id="btn" class="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-semibold py-6 rounded-2xl text-lg flex items-center justify-center gap-3 transition-all">
+      <!-- 国家和货币 -->
+      <div class="grid grid-cols-2 gap-6 mb-8">
+        <div>
+          <div class="font-semibold mb-2">国家/地区</div>
+          <select class="w-full border border-gray-300 rounded-2xl px-5 py-4 text-base focus:outline-none focus:border-emerald-500">
+            <option>美国 (US)</option>
+          </select>
+        </div>
+        <div>
+          <div class="font-semibold mb-2">货币代码</div>
+          <select class="w-full border border-gray-300 rounded-2xl px-5 py-4 text-base focus:outline-none focus:border-emerald-500">
+            <option>USD</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Access Token -->
+      <div class="mb-8">
+        <div class="font-semibold mb-2">Access Token</div>
+        <textarea id="token" rows="5" class="w-full border border-gray-300 rounded-3xl p-6 font-mono text-sm focus:outline-none focus:border-emerald-500" placeholder="粘贴你的 Access Token..."></textarea>
+        <div class="mt-3 text-xs text-emerald-600 bg-emerald-50 px-4 py-3 rounded-2xl">
+          💡 在 https://chatgpt.com/api/auth/session 获取，支持直接粘贴 Token 或完整 JSON
+        </div>
+      </div>
+
+      <!-- 生成按钮 -->
+      <button onclick="generateLink()" id="generateBtn"
+        class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xl py-7 rounded-3xl transition-all flex items-center justify-center gap-3 shadow-lg">
         🚀 生成支付链接
       </button>
 
-      <div id="result" class="hidden mt-8 bg-emerald-950 border border-emerald-500 rounded-2xl p-6">
-        <div class="flex items-center gap-3 text-emerald-400 mb-4"><span class="text-2xl">✅</span><span class="font-semibold">支付链接生成成功！</span></div>
-        <div class="bg-zinc-900 rounded-xl p-4 font-mono text-sm break-all" id="link"></div>
-        <div class="flex gap-4 mt-6">
-          <button onclick="copyLink()" class="flex-1 bg-white text-black py-4 rounded-2xl font-semibold">📋 复制链接</button>
-          <button onclick="openLink()" class="flex-1 bg-blue-600 py-4 rounded-2xl font-semibold">🚀 打开链接</button>
+      <!-- 成功结果 -->
+      <div id="result" class="hidden mt-10 bg-emerald-50 border border-emerald-300 rounded-3xl p-8">
+        <div class="flex items-center gap-4 text-emerald-600 mb-5">
+          <div class="w-9 h-9 bg-emerald-100 rounded-2xl flex items-center justify-center text-2xl">✅</div>
+          <div>
+            <div class="font-semibold text-xl">支付链接生成成功</div>
+            <div class="text-sm text-emerald-600">链接已准备就绪，可以立即使用</div>
+          </div>
+        </div>
+        <div id="link" class="bg-white border border-emerald-200 rounded-2xl p-5 font-mono text-sm break-all"></div>
+        <div class="mt-6 flex gap-4">
+          <button onclick="copyLink()" class="flex-1 bg-emerald-600 text-white py-6 rounded-3xl font-semibold text-lg">📋 复制链接</button>
+          <button onclick="openLink()" class="flex-1 bg-emerald-700 text-white py-6 rounded-3xl font-semibold text-lg">🚀 打开链接</button>
         </div>
       </div>
     </div>
@@ -55,19 +121,22 @@
     const PROXY = "https://corsproxy.io/?";
     const BASE = "https://team.aimizy.com";
 
-    function selectPlan(btn) {
-      document.querySelectorAll('.plan-btn').forEach(b => b.classList.remove('active', 'bg-blue-600'));
-      btn.classList.add('active', 'bg-blue-600');
-      selectedPlan = btn.dataset.plan;
+    function selectPlan(el) {
+      document.querySelectorAll('.plan').forEach(p => {
+        p.classList.remove('plan-selected', 'border-emerald-500');
+        p.classList.add('border-gray-200');
+      });
+      el.classList.add('plan-selected', 'border-emerald-500');
+      selectedPlan = el.dataset.plan;
     }
 
     async function loadStats() {
       try {
         const res = await fetch(PROXY + encodeURIComponent(BASE + '/api/public/payment-link-stats'));
         const data = await res.json();
-        document.getElementById('stat-total').querySelector('div').textContent = data.total || '139720';
-        document.getElementById('stat-team').querySelector('div').textContent = data.team || '71685';
-        document.getElementById('stat-plus').querySelector('div').textContent = data.plus || '68035';
+        document.getElementById('total').textContent = data.total || '139720';
+        document.getElementById('team').textContent = data.team || '71685';
+        document.getElementById('plus').textContent = data.plus || '68035';
       } catch(e) {}
     }
 
@@ -75,52 +144,44 @@
       const token = document.getElementById('token').value.trim();
       if (!token) return alert('请输入 Access Token');
 
-      const btn = document.getElementById('btn');
-      const resultDiv = document.getElementById('result');
+      const btn = document.getElementById('generateBtn');
       btn.disabled = true;
-      btn.innerHTML = '⏳ 生成中...';
-      resultDiv.classList.add('hidden');
+      btn.innerHTML = '⏳ 生成中，请稍候...';
 
       try {
-        const apiUrl = BASE + '/api/public/generate-payment-link';
-        const res = await fetch(PROXY + encodeURIComponent(apiUrl), {
+        const res = await fetch(PROXY + encodeURIComponent(BASE + '/api/public/generate-payment-link'), {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Referer': 'https://team.aimizy.com/pay',
-            'Origin': 'https://team.aimizy.com'
-          },
+          headers: { 'Content-Type': 'application/json', 'Referer': BASE + '/pay' },
           body: JSON.stringify({
             plan: selectedPlan,
-            payment_mode: "代付短链接（站内支付，推荐）",
+            payment_mode: document.getElementById('payment_mode').value,
             country: "US",
             currency: "USD",
             access_token: token
           })
         });
-
-        if (!res.ok) {
-          const errText = await res.text();
-          throw new Error('后端返回错误：' + errText);
-        }
-
         const data = await res.json();
         if (data.success && data.url) {
           document.getElementById('link').textContent = data.url;
-          resultDiv.classList.remove('hidden');
+          document.getElementById('result').classList.remove('hidden');
         } else {
-          alert('生成失败：' + (data.error || JSON.stringify(data)));
+          alert('生成失败：' + (data.error || '未知错误'));
         }
       } catch(e) {
-        alert('请求出错：\n' + e.message + '\n\n请把完整错误消息截图发给我，我马上帮你修复！');
+        alert('请求失败，请把错误截图发我，我马上修复！');
       }
 
       btn.disabled = false;
       btn.innerHTML = '🚀 生成支付链接';
     }
 
-    function copyLink() { navigator.clipboard.writeText(document.getElementById('link').textContent); alert('✅ 已复制！'); }
-    function openLink() { window.open(document.getElementById('link').textContent, '_blank'); }
+    function copyLink() {
+      navigator.clipboard.writeText(document.getElementById('link').textContent);
+      alert('✅ 链接已复制到剪贴板！');
+    }
+    function openLink() {
+      window.open(document.getElementById('link').textContent, '_blank');
+    }
 
     loadStats();
   </script>
